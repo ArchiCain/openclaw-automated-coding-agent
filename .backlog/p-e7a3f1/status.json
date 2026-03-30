@@ -1,0 +1,13 @@
+{
+  "planId": "p-e7a3f1",
+  "status": "cancelled",
+  "branch": null,
+  "currentFeature": null,
+  "currentTask": null,
+  "features": {},
+  "updated": "2026-03-29T16:36:00.000Z",
+  "history": [
+    { "status": "draft", "at": "2026-03-28T00:00:00.000Z" },
+    { "status": "cancelled", "at": "2026-03-28T01:30:00.000Z" }
+  ]
+}

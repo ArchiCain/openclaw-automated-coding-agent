@@ -1,0 +1,301 @@
+{
+  "planId": "p-e7a3f1",
+  "status": "pr-submitted",
+  "branch": "openclaw/decompose/p-e7a3f1",
+  "updated": "2026-03-30T02:16:00.000Z",
+  "tasks": {
+    "t-6373994e32d2": {
+      "status": "qa-passed",
+      "project": "frontend",
+      "feature": "app-scaffold",
+      "specialist": "frontend-eng",
+      "dependsOn": [],
+      "attempts": 1,
+      "commitHash": "bd24d5c"
+    },
+    "t-295ea5c0bfe3": {
+      "status": "qa-passed",
+      "project": "frontend",
+      "feature": "material-theme",
+      "specialist": "frontend-eng",
+      "dependsOn": [
+        "t-6373994e32d2"
+      ],
+      "attempts": 0,
+      "commitHash": "782174b"
+    },
+    "t-436721b5494c": {
+      "status": "qa-passed",
+      "project": "frontend",
+      "feature": "material-theme",
+      "specialist": "frontend-eng",
+      "dependsOn": [
+        "t-6373994e32d2",
+        "t-295ea5c0bfe3"
+      ],
+      "attempts": 0,
+      "commitHash": "5fa548e"
+    },
+    "t-557fd45ea80e": {
+      "status": "qa-passed",
+      "project": "frontend",
+      "feature": "api-client",
+      "specialist": "frontend-eng",
+      "dependsOn": [
+        "t-6373994e32d2"
+      ],
+      "attempts": 0,
+      "commitHash": "f3c38b9"
+    },
+    "t-5a23bd61342d": {
+      "status": "qa-passed",
+      "project": "frontend",
+      "feature": "keycloak-auth",
+      "specialist": "frontend-eng",
+      "dependsOn": [
+        "t-6373994e32d2"
+      ],
+      "attempts": 1,
+      "commitHash": "97b3335"
+    },
+    "t-210f443a2d66": {
+      "status": "qa-passed",
+      "project": "frontend",
+      "feature": "keycloak-auth",
+      "specialist": "frontend-eng",
+      "dependsOn": [
+        "t-5a23bd61342d"
+      ],
+      "attempts": 3,
+      "commitHash": "c2b576b"
+    },
+    "t-06bd1e126551": {
+      "status": "qa-passed",
+      "project": "frontend",
+      "feature": "keycloak-auth",
+      "specialist": "frontend-eng",
+      "dependsOn": [
+        "t-5a23bd61342d"
+      ],
+      "attempts": 3,
+      "commitHash": "1c9dc96"
+    },
+    "t-d54b526e09f5": {
+      "status": "qa-passed",
+      "project": "frontend",
+      "feature": "layout-navigation",
+      "specialist": "frontend-eng",
+      "dependsOn": [
+        "t-6373994e32d2"
+      ],
+      "attempts": 0,
+      "commitHash": "4adb4f5"
+    },
+    "t-b3fdb1c0f543": {
+      "status": "qa-passed",
+      "project": "frontend",
+      "feature": "layout-navigation",
+      "specialist": "frontend-eng",
+      "dependsOn": [
+        "t-6373994e32d2",
+        "t-d54b526e09f5",
+        "t-5a23bd61342d"
+      ],
+      "attempts": 3,
+      "commitHash": "6ab2e3a"
+    },
+    "t-89679546b27d": {
+      "status": "qa-passed",
+      "project": "frontend",
+      "feature": "layout-navigation",
+      "specialist": "frontend-eng",
+      "dependsOn": [
+        "t-6373994e32d2",
+        "t-5a23bd61342d",
+        "t-436721b5494c"
+      ],
+      "attempts": 3,
+      "commitHash": "44d9c01"
+    },
+    "t-994b187fc129": {
+      "status": "qa-passed",
+      "project": "frontend",
+      "feature": "layout-navigation",
+      "specialist": "frontend-eng",
+      "dependsOn": [
+        "t-6373994e32d2",
+        "t-b3fdb1c0f543",
+        "t-89679546b27d"
+      ],
+      "attempts": 0,
+      "commitHash": "1838f63"
+    },
+    "t-c06bdcef4e32": {
+      "status": "qa-passed",
+      "project": "frontend",
+      "feature": "shared-components",
+      "specialist": "frontend-eng",
+      "dependsOn": [
+        "t-6373994e32d2"
+      ],
+      "attempts": 0,
+      "commitHash": "0cca0a5"
+    },
+    "t-9c0ec2c1931d": {
+      "status": "qa-passed",
+      "project": "frontend",
+      "feature": "chat",
+      "specialist": "frontend-eng",
+      "dependsOn": [
+        "t-5a23bd61342d",
+        "t-557fd45ea80e"
+      ],
+      "attempts": 3,
+      "commitHash": "e071261"
+    },
+    "t-7fcbab55d1c9": {
+      "status": "qa-passed",
+      "project": "frontend",
+      "feature": "chat",
+      "specialist": "frontend-eng",
+      "dependsOn": [
+        "t-9c0ec2c1931d",
+        "t-c06bdcef4e32"
+      ],
+      "attempts": 0,
+      "commitHash": "57ad948"
+    },
+    "t-77f36a6d415c": {
+      "status": "qa-passed",
+      "project": "frontend",
+      "feature": "user-management",
+      "specialist": "frontend-eng",
+      "dependsOn": [
+        "t-5a23bd61342d"
+      ],
+      "attempts": 0,
+      "commitHash": "c99532f"
+    },
+    "t-8c415fd367e5": {
+      "status": "qa-passed",
+      "project": "frontend",
+      "feature": "user-management",
+      "specialist": "frontend-eng",
+      "dependsOn": [
+        "t-77f36a6d415c",
+        "t-c06bdcef4e32",
+        "t-210f443a2d66"
+      ],
+      "attempts": 0,
+      "commitHash": "851c62c"
+    },
+    "t-038febd79f45": {
+      "status": "qa-passed",
+      "project": "frontend",
+      "feature": "testing-tools",
+      "specialist": "frontend-eng",
+      "dependsOn": [
+        "t-5a23bd61342d"
+      ],
+      "attempts": 1,
+      "commitHash": "f2be3c9"
+    },
+    "t-5982bf9064df": {
+      "status": "qa-passed",
+      "project": "frontend",
+      "feature": "app-scaffold",
+      "specialist": "frontend-eng",
+      "dependsOn": [
+        "t-210f443a2d66",
+        "t-06bd1e126551",
+        "t-994b187fc129",
+        "t-7fcbab55d1c9",
+        "t-8c415fd367e5",
+        "t-038febd79f45"
+      ],
+      "attempts": 0,
+      "commitHash": "adf6f96"
+    },
+    "t-6053ad781e00": {
+      "status": "qa-passed",
+      "project": "infra-docker",
+      "feature": "app-scaffold",
+      "specialist": "infra-eng",
+      "dependsOn": [
+        "t-6373994e32d2"
+      ],
+      "attempts": 0,
+      "commitHash": "f913c35"
+    },
+    "t-7250575e2f6f": {
+      "status": "qa-passed",
+      "project": "e2e",
+      "feature": "app-scaffold",
+      "specialist": "qa-eng",
+      "dependsOn": [
+        "t-5982bf9064df"
+      ],
+      "attempts": 1,
+      "commitHash": "8595951"
+    }
+  },
+  "features": {
+    "app-scaffold": {
+      "status": "qa-passed"
+    },
+    "material-theme": {
+      "status": "qa-passed"
+    },
+    "api-client": {
+      "status": "qa-passed"
+    },
+    "keycloak-auth": {
+      "status": "qa-passed"
+    },
+    "layout-navigation": {
+      "status": "qa-passed"
+    },
+    "shared-components": {
+      "status": "qa-passed"
+    },
+    "chat": {
+      "status": "qa-passed"
+    },
+    "user-management": {
+      "status": "qa-passed"
+    },
+    "testing-tools": {
+      "status": "qa-passed"
+    }
+  },
+  "history": [
+    {
+      "status": "draft",
+      "at": "2026-03-28T00:00:00.000Z"
+    },
+    {
+      "status": "ready",
+      "at": "2026-03-28T01:30:00.000Z"
+    },
+    {
+      "status": "decomposing",
+      "at": "2026-03-29T18:24:00.000Z"
+    },
+    {
+      "status": "decomposed",
+      "at": "2026-03-29T18:27:00.000Z"
+    },
+    {
+      "status": "executing",
+      "at": "2026-03-29T21:30:00.000Z"
+    },
+    {
+      "status": "qa-passed",
+      "at": "2026-03-30T02:15:00.000Z"
+    },
+    {
+      "status": "pr-submitted",
+      "at": "2026-03-30T02:16:00.000Z"
+    }
+  ]
+}

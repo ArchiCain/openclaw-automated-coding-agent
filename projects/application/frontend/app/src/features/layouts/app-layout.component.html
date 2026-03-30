@@ -1,0 +1,28 @@
+@if (layoutService.isMobile$ | async) {
+  <mat-sidenav-container style="height: 100vh;">
+    <mat-sidenav
+      mode="over"
+      [opened]="(layoutService.sidenavOpen$ | async) ?? false"
+      (closedStart)="layoutService.closeSidenav()"
+    >
+      <app-navigation-drawer
+        [opened]="(layoutService.sidenavOpen$ | async) ?? false"
+        (closedDrawer)="layoutService.closeSidenav()"
+      />
+    </mat-sidenav>
+    <mat-sidenav-content>
+      <app-header (menuToggled)="layoutService.toggleSidenav()" />
+      <router-outlet />
+    </mat-sidenav-content>
+  </mat-sidenav-container>
+} @else {
+  <mat-sidenav-container style="height: 100vh;">
+    <mat-sidenav mode="side" opened>
+      <app-navigation-sidebar />
+    </mat-sidenav>
+    <mat-sidenav-content>
+      <app-header (menuToggled)="layoutService.toggleSidenav()" />
+      <router-outlet />
+    </mat-sidenav-content>
+  </mat-sidenav-container>
+}

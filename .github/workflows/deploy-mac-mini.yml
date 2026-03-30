@@ -1,0 +1,232 @@
+name: Deploy to Mac Mini
+
+on:
+  push:
+    branches:
+      - mac-mini
+
+env:
+  REGISTRY: mac-mini:30500
+  IMAGE_TAG: ${{ github.sha }}
+  DEPLOY_ENV: mac-mini
+
+jobs:
+  setup:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: tailscale/github-action@v3
+        with:
+          oauth-client-id: ${{ secrets.TS_OAUTH_CLIENT_ID }}
+          oauth-secret: ${{ secrets.TS_OAUTH_SECRET }}
+          tags: tag:ci
+
+      - name: Configure Docker for insecure registry
+        run: |
+          sudo tee /etc/docker/daemon.json << 'EOF'
+          {
+            "insecure-registries": ["mac-mini:30500"]
+          }
+          EOF
+          sudo systemctl restart docker
+
+      - name: Write kubeconfig
+        run: |
+          mkdir -p ~/.kube
+          echo "${{ secrets.KUBECONFIG_MAC_MINI }}" > ~/.kube/config
+          chmod 600 ~/.kube/config
+
+      - name: Write env file
+        run: |
+          echo "${{ secrets.ENV_FILE_MAC_MINI }}" > .env
+          echo "" >> .env
+          echo "REGISTRY=mac-mini:30500" >> .env
+          echo "IMAGE_TAG=${{ github.sha }}" >> .env
+
+      - name: Deploy registry
+        working-directory: infrastructure/k8s
+        run: |
+          curl -fsSL https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
+          HELMFILE_VERSION=$(curl -sI https://github.com/helmfile/helmfile/releases/latest | grep -i location | sed 's/.*tag\///' | tr -d '\r\n')
+          curl -fsSL "https://github.com/helmfile/helmfile/releases/download/${HELMFILE_VERSION}/helmfile_${HELMFILE_VERSION#v}_linux_amd64.tar.gz" \
+            | tar xz -C /usr/local/bin helmfile
+          helm plugin install https://github.com/databus23/helm-diff
+          set -a && source ../../.env && set +a
+          helmfile -e mac-mini -l name=registry apply
+
+      - name: Wait for registry
+        run: |
+          for i in $(seq 1 30); do
+            if curl -sf http://mac-mini:30500/v2/ > /dev/null 2>&1; then
+              echo "Registry is reachable"
+              exit 0
+            fi
+            echo "Waiting for registry... ($i/30)"
+            sleep 2
+          done
+          echo "Registry not reachable" && exit 1
+
+  build-backend:
+    needs: setup
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: tailscale/github-action@v3
+        with:
+          oauth-client-id: ${{ secrets.TS_OAUTH_CLIENT_ID }}
+          oauth-secret: ${{ secrets.TS_OAUTH_SECRET }}
+          tags: tag:ci
+      - uses: docker/setup-buildx-action@v3
+        with:
+          driver-opts: network=host
+          buildkitd-config-inline: |
+            [registry."mac-mini:30500"]
+              http = true
+              insecure = true
+      - uses: docker/build-push-action@v6
+        with:
+          context: projects/application/backend
+          file: projects/application/backend/dockerfiles/prod.Dockerfile
+          push: true
+          tags: |
+            ${{ env.REGISTRY }}/backend:${{ env.IMAGE_TAG }}
+            ${{ env.REGISTRY }}/backend:latest
+          cache-from: type=gha,scope=backend
+          cache-to: type=gha,mode=max,scope=backend
+
+  build-frontend:
+    needs: setup
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: tailscale/github-action@v3
+        with:
+          oauth-client-id: ${{ secrets.TS_OAUTH_CLIENT_ID }}
+          oauth-secret: ${{ secrets.TS_OAUTH_SECRET }}
+          tags: tag:ci
+      - uses: docker/setup-buildx-action@v3
+        with:
+          driver-opts: network=host
+          buildkitd-config-inline: |
+            [registry."mac-mini:30500"]
+              http = true
+              insecure = true
+      - uses: docker/build-push-action@v6
+        with:
+          context: projects/application/frontend
+          file: projects/application/frontend/dockerfiles/prod.Dockerfile
+          push: true
+          tags: |
+            ${{ env.REGISTRY }}/frontend:${{ env.IMAGE_TAG }}
+            ${{ env.REGISTRY }}/frontend:latest
+          build-args: |
+            VITE_BACKEND_URL=/api
+          cache-from: type=gha,scope=frontend
+          cache-to: type=gha,mode=max,scope=frontend
+
+  build-keycloak:
+    needs: setup
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: tailscale/github-action@v3
+        with:
+          oauth-client-id: ${{ secrets.TS_OAUTH_CLIENT_ID }}
+          oauth-secret: ${{ secrets.TS_OAUTH_SECRET }}
+          tags: tag:ci
+      - uses: docker/setup-buildx-action@v3
+        with:
+          driver-opts: network=host
+          buildkitd-config-inline: |
+            [registry."mac-mini:30500"]
+              http = true
+              insecure = true
+      - uses: docker/build-push-action@v6
+        with:
+          context: projects/application/keycloak
+          file: projects/application/keycloak/dockerfiles/Dockerfile
+          push: true
+          tags: |
+            ${{ env.REGISTRY }}/keycloak:${{ env.IMAGE_TAG }}
+            ${{ env.REGISTRY }}/keycloak:latest
+          cache-from: type=gha,scope=keycloak
+          cache-to: type=gha,mode=max,scope=keycloak
+
+  build-openclaw:
+    needs: setup
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: tailscale/github-action@v3
+        with:
+          oauth-client-id: ${{ secrets.TS_OAUTH_CLIENT_ID }}
+          oauth-secret: ${{ secrets.TS_OAUTH_SECRET }}
+          tags: tag:ci
+      - uses: docker/setup-buildx-action@v3
+        with:
+          driver-opts: network=host
+          buildkitd-config-inline: |
+            [registry."mac-mini:30500"]
+              http = true
+              insecure = true
+      - uses: docker/build-push-action@v6
+        with:
+          context: projects/openclaw
+          file: projects/openclaw/dockerfiles/prod.Dockerfile
+          push: true
+          tags: |
+            ${{ env.REGISTRY }}/openclaw-gateway:${{ env.IMAGE_TAG }}
+            ${{ env.REGISTRY }}/openclaw-gateway:latest
+          cache-from: type=gha,scope=openclaw
+          cache-to: type=gha,mode=max,scope=openclaw
+
+  deploy:
+    needs: [build-backend, build-frontend, build-keycloak, build-openclaw]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: tailscale/github-action@v3
+        with:
+          oauth-client-id: ${{ secrets.TS_OAUTH_CLIENT_ID }}
+          oauth-secret: ${{ secrets.TS_OAUTH_SECRET }}
+          tags: tag:ci
+
+      - name: Set up Helm and Helmfile
+        run: |
+          curl -fsSL https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
+          HELMFILE_VERSION=$(curl -sI https://github.com/helmfile/helmfile/releases/latest | grep -i location | sed 's/.*tag\///' | tr -d '\r\n')
+          curl -fsSL "https://github.com/helmfile/helmfile/releases/download/${HELMFILE_VERSION}/helmfile_${HELMFILE_VERSION#v}_linux_amd64.tar.gz" \
+            | tar xz -C /usr/local/bin helmfile
+          helm plugin install https://github.com/databus23/helm-diff
+
+      - name: Write kubeconfig
+        run: |
+          mkdir -p ~/.kube
+          echo "${{ secrets.KUBECONFIG_MAC_MINI }}" > ~/.kube/config
+          chmod 600 ~/.kube/config
+
+      - name: Write env file
+        run: |
+          echo "${{ secrets.ENV_FILE_MAC_MINI }}" > .env
+          echo "" >> .env
+          echo "REGISTRY=mac-mini:30500" >> .env
+          echo "IMAGE_TAG=${{ github.sha }}" >> .env
+
+      - name: Deploy with Helmfile
+        working-directory: infrastructure/k8s
+        run: |
+          set -a && source ../../.env && set +a
+          helmfile -e mac-mini apply
+
+      - name: Verify deployment
+        run: |
+          kubectl rollout status deployment/backend -n app --timeout=120s
+          kubectl rollout status deployment/frontend -n app --timeout=120s
+          kubectl rollout status deployment/keycloak -n app --timeout=120s
+          kubectl rollout status deployment/openclaw-gateway -n openclaw --timeout=180s
+          echo ""
+          echo "=== App Namespace ==="
+          kubectl get pods -n app
+          echo ""
+          echo "=== OpenClaw Namespace ==="
+          kubectl get pods -n openclaw

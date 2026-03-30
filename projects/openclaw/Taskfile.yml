@@ -1,0 +1,120 @@
+version: '3'
+
+tasks:
+  # Local Development Tasks
+  local:start:
+    desc: Start OpenClaw Gateway locally via Docker Compose (with all dependencies)
+    cmds:
+      - echo "Starting OpenClaw Gateway..."
+      - docker compose -f {{.TASKFILE_DIR}}/../../infrastructure/docker/compose.yml up openclaw-gateway -d
+      - echo "OpenClaw Web UI available at http://localhost:${OPENCLAW_PORT:-18789}"
+
+  local:start:standalone:
+    desc: Start OpenClaw Gateway only (no backend/frontend/keycloak dependencies)
+    cmds:
+      - echo "Starting OpenClaw Gateway (standalone)..."
+      - docker compose --env-file {{.TASKFILE_DIR}}/../../.env -f {{.TASKFILE_DIR}}/../../infrastructure/docker/compose.yml up openclaw-gateway -d --no-deps
+      - echo "OpenClaw Web UI available at http://localhost:${OPENCLAW_PORT:-18789}"
+
+  local:purge-and-restart:
+    desc: Purge openclaw container, image, and volumes then restart standalone
+    vars:
+      COMPOSE_FILE: "{{.TASKFILE_DIR}}/../../infrastructure/docker/compose.yml"
+      ENV_FILE: "{{.TASKFILE_DIR}}/../../.env"
+    cmds:
+      - echo "Tearing down openclaw-gateway (containers, volumes)..."
+      - docker compose --env-file {{.ENV_FILE}} -f {{.COMPOSE_FILE}} down -v --remove-orphans || true
+      - echo "Removing openclaw image..."
+      - docker images --filter "reference=*openclaw*" -q | xargs -r docker rmi -f || true
+      - echo "Rebuilding and starting openclaw-gateway (standalone)..."
+      - docker compose --env-file {{.ENV_FILE}} -f {{.COMPOSE_FILE}} build --no-cache openclaw-gateway
+      - docker compose --env-file {{.ENV_FILE}} -f {{.COMPOSE_FILE}} up -d --no-deps openclaw-gateway
+      - echo "openclaw-gateway purged and restarted!"
+
+  local:stop:
+    desc: Stop OpenClaw Gateway
+    cmds:
+      - docker compose -f {{.TASKFILE_DIR}}/../../infrastructure/docker/compose.yml stop openclaw-gateway
+
+  local:logs:
+    desc: Follow OpenClaw Gateway logs
+    cmds:
+      - docker compose -f {{.TASKFILE_DIR}}/../../infrastructure/docker/compose.yml logs -f openclaw-gateway
+
+  local:restart:
+    desc: Restart OpenClaw Gateway
+    cmds:
+      - docker compose -f {{.TASKFILE_DIR}}/../../infrastructure/docker/compose.yml restart openclaw-gateway
+
+  local:health:
+    desc: Check OpenClaw Gateway health
+    cmds:
+      - curl -sf http://localhost:${OPENCLAW_PORT:-18789}/health && echo "OK" || echo "Health check failed"
+
+  local:pair:
+    desc: Approve a pending device pairing request (run after connecting in the Web UI)
+    cmds:
+      - echo ""
+      - echo "=== OpenClaw Device Pairing ==="
+      - echo ""
+      - echo "1. Open http://localhost:${OPENCLAW_PORT:-18789} in your browser"
+      - echo "2. Enter your OPENCLAW_AUTH_TOKEN from .env as the Gateway Token"
+      - echo "3. Click Connect — you'll see 'pairing required'"
+      - echo "4. Come back here and press Enter to approve the pending device"
+      - echo ""
+      - echo "Press Enter when you've clicked Connect in the browser..."
+      - read
+      - |
+        COMPOSE_FILE="{{.TASKFILE_DIR}}/../../infrastructure/docker/compose.yml"
+        ENV_FILE="{{.TASKFILE_DIR}}/../../.env"
+        EXEC_PREFIX="source /etc/nix-env && export PATH=/usr/local/bin:\$NIX_PATHS"
+        REQUEST_ID=$(docker compose --env-file "$ENV_FILE" -f "$COMPOSE_FILE" exec -T openclaw-gateway bash -c "$EXEC_PREFIX && openclaw devices list" 2>&1 | grep -i pending -A 10 | grep -oE '[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}' | head -1)
+        if [ -z "$REQUEST_ID" ]; then
+          echo "No pending pairing requests found. Make sure you clicked Connect in the browser first."
+          exit 1
+        fi
+        echo "Approving device: $REQUEST_ID"
+        docker compose --env-file "$ENV_FILE" -f "$COMPOSE_FILE" exec -T openclaw-gateway bash -c "$EXEC_PREFIX && openclaw devices approve $REQUEST_ID"
+        echo ""
+        echo "Device approved! Go back to the browser and click Connect again."
+
+  # Remote Build & Deploy Tasks
+  # The Nix-based Dockerfile cannot be cross-compiled (arm64->amd64) due to QEMU seccomp
+  # limitations. These tasks build directly on the target K8s node via SSH.
+  remote:build:
+    desc: Build and push image on the remote K8s node
+    cmds:
+      - echo "Syncing project to ${K8S_NODE}..."
+      - rsync -av --exclude='node_modules' --exclude='dist' {{.TASKFILE_DIR}}/ ${K8S_NODE}:/tmp/openclaw-gateway-build/
+      - echo "Building on ${K8S_NODE}..."
+      - ssh ${K8S_NODE} "sudo docker build -t localhost:30500/openclaw-gateway:${IMAGE_TAG:-latest} -f /tmp/openclaw-gateway-build/dockerfiles/prod.Dockerfile /tmp/openclaw-gateway-build/"
+      - echo "Pushing to registry..."
+      - ssh ${K8S_NODE} "sudo docker push localhost:30500/openclaw-gateway:${IMAGE_TAG:-latest}"
+      - echo "Done. Image pushed to localhost:30500/openclaw-gateway:${IMAGE_TAG:-latest}"
+
+  remote:deploy:
+    desc: Build, push, and deploy to K8s (full remote deploy)
+    cmds:
+      - task: remote:build
+      - echo "Deploying with helmfile..."
+      - cd {{.TASKFILE_DIR}}/../.. && set -a && source .env && source .env.mac-mini && set +a && cd infrastructure/k8s && helmfile -e mac-mini -l name=openclaw-gateway apply
+      - kubectl rollout restart deployment/openclaw-gateway -n ${OPENCLAW_NAMESPACE:-openclaw}
+      - kubectl rollout status deployment/openclaw-gateway -n ${OPENCLAW_NAMESPACE:-openclaw} --timeout=180s
+      - echo "Deploy complete."
+
+  # K8s Operations
+  k8s:status:
+    desc: Show OpenClaw pod status
+    cmds:
+      - kubectl get pods -n ${OPENCLAW_NAMESPACE:-openclaw}
+      - kubectl get ingress -n ${OPENCLAW_NAMESPACE:-openclaw}
+
+  k8s:logs:
+    desc: Follow OpenClaw pod logs
+    cmds:
+      - kubectl logs -f -l app=openclaw-gateway -n ${OPENCLAW_NAMESPACE:-openclaw}
+
+  k8s:shell:
+    desc: Open a shell in the OpenClaw pod
+    cmds:
+      - kubectl exec -it $(kubectl get pod -l app=openclaw-gateway -n ${OPENCLAW_NAMESPACE:-openclaw} -o jsonpath='{.items[0].metadata.name}') -n ${OPENCLAW_NAMESPACE:-openclaw} -- /bin/bash

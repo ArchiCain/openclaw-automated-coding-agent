@@ -1,0 +1,52 @@
+{
+  "gateway": {
+    "mode": "local",
+    "port": 18789,
+    "bind": "lan",
+    "controlUi": {
+      "allowedOrigins": []
+    }
+  },
+  "agents": {
+    "defaults": {
+      "model": "anthropic/claude-sonnet-4-6",
+      "subagents": {
+        "maxSpawnDepth": 3,
+        "maxChildrenPerAgent": 20,
+        "maxConcurrent": 20,
+        "runTimeoutSeconds": 1800
+      }
+    }
+  },
+  "hooks": {
+    "enabled": false
+  },
+  "cron": {
+    "enabled": true,
+    "maxConcurrentRuns": 3,
+    "sessionRetention": "24h"
+  },
+  "skills": {
+    "load": {
+      "extraDirs": ["./skills"]
+    }
+  },
+  "plugins": {
+    "entries": {
+      "acpx": {
+        "enabled": true,
+        "config": {
+          "permissionMode": "approve-all",
+          "nonInteractivePermissions": "deny"
+        }
+      }
+    }
+  },
+  "acp": {
+    "enabled": true,
+    "backend": "acpx",
+    "defaultAgent": "claude",
+    "allowedAgents": ["claude"],
+    "maxConcurrentSessions": 20
+  }
+}

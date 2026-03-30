@@ -1,0 +1,168 @@
+{
+  "planId": "p-f4a512",
+  "status": "stalled",
+  "branch": "openclaw/p-f4a512",
+  "updated": "2026-03-30T12:49:55.487Z",
+  "tasks": {
+    "t-3f8b41a454b7": {
+      "status": "qa-passed",
+      "project": "backend",
+      "feature": "python-backend-foundation",
+      "specialist": "backend-eng",
+      "dependsOn": [],
+      "attempts": 0,
+      "commitHash": "c1ad232"
+    },
+    "t-24a806eb6b7a": {
+      "status": "qa-passed",
+      "project": "backend",
+      "feature": "python-backend-foundation",
+      "specialist": "backend-eng",
+      "dependsOn": [
+        "t-3f8b41a454b7"
+      ],
+      "attempts": 2,
+      "commitHash": "a9aa1ed"
+    },
+    "t-2ee15c48ba18": {
+      "status": "qa-passed",
+      "project": "backend",
+      "feature": "python-backend-foundation",
+      "specialist": "backend-eng",
+      "dependsOn": [
+        "t-3f8b41a454b7"
+      ],
+      "attempts": 2,
+      "commitHash": "221e196"
+    },
+    "t-c56c443adc0b": {
+      "status": "qa-passed",
+      "project": "backend",
+      "feature": "python-backend-foundation",
+      "specialist": "backend-eng",
+      "dependsOn": [
+        "t-3f8b41a454b7"
+      ],
+      "attempts": 0,
+      "commitHash": "c448d39"
+    },
+    "t-b1b9102dc06b": {
+      "status": "qa-passed",
+      "project": "infra-docker",
+      "feature": "python-backend-infra",
+      "specialist": "infra-eng",
+      "dependsOn": [
+        "t-3f8b41a454b7"
+      ],
+      "attempts": 0,
+      "commitHash": "a116422"
+    },
+    "t-e4c44a3aac62": {
+      "status": "qa-passed",
+      "project": "infra-docker",
+      "feature": "python-backend-infra",
+      "specialist": "infra-eng",
+      "dependsOn": [
+        "t-b1b9102dc06b"
+      ],
+      "attempts": 0,
+      "commitHash": "4b15f3a"
+    },
+    "t-b4dd4e9c53e4": {
+      "status": "qa-passed",
+      "project": "infra-k8s",
+      "feature": "python-backend-infra",
+      "specialist": "infra-eng",
+      "dependsOn": [
+        "t-b1b9102dc06b"
+      ],
+      "attempts": 0,
+      "commitHash": "57c0190"
+    },
+    "t-575d106b8c34": {
+      "status": "qa-passed",
+      "project": "frontend",
+      "feature": "backend-selector",
+      "specialist": "frontend-eng",
+      "dependsOn": [],
+      "attempts": 0,
+      "commitHash": "4f85175"
+    },
+    "t-6220e02b0dda": {
+      "status": "qa-passed",
+      "project": "frontend",
+      "feature": "backend-selector",
+      "specialist": "frontend-eng",
+      "dependsOn": [
+        "t-575d106b8c34"
+      ],
+      "attempts": 0,
+      "commitHash": "4e3abcb"
+    },
+    "t-d31f65e5c587": {
+      "status": "qa-passed",
+      "project": "frontend",
+      "feature": "backend-selector",
+      "specialist": "frontend-eng",
+      "dependsOn": [
+        "t-575d106b8c34",
+        "t-6220e02b0dda"
+      ],
+      "attempts": 0,
+      "commitHash": "2179627"
+    },
+    "t-527dc562b755": {
+      "status": "qa-passed",
+      "project": "e2e",
+      "feature": "backend-selector",
+      "specialist": "qa-eng",
+      "dependsOn": [
+        "t-d31f65e5c587"
+      ],
+      "attempts": 0,
+      "commitHash": "1855742"
+    }
+  },
+  "features": {
+    "python-backend-foundation": {
+      "status": "qa-passed"
+    },
+    "python-backend-infra": {
+      "status": "qa-passed"
+    },
+    "backend-selector": {
+      "status": "qa-passed"
+    }
+  },
+  "history": [
+    {
+      "status": "draft",
+      "at": "2026-03-30T03:37:00.000Z"
+    },
+    {
+      "status": "ready",
+      "at": "2026-03-30T03:37:00.000Z"
+    },
+    {
+      "status": "decomposing",
+      "at": "2026-03-30T04:13:00.000Z"
+    },
+    {
+      "status": "decomposed",
+      "at": "2026-03-30T04:13:00.000Z"
+    },
+    {
+      "status": "executing",
+      "at": "2026-03-30T04:42:44.037Z"
+    },
+    {
+      "status": "qa-passed",
+      "at": "2026-03-30T10:44:53.721Z"
+    },
+    {
+      "status": "stalled",
+      "at": "2026-03-30T12:49:55.487Z",
+      "reason": "CI workflow missing build-backend-python job — PAT lacks workflow scope to fix"
+    }
+  ]
+}

@@ -1,0 +1,77 @@
+version: '3'
+
+tasks:
+  diff:
+    desc: Show what would change in the cluster
+    cmds:
+      - helmfile -e ${DEPLOY_ENV:-dev} diff
+
+  apply:
+    desc: Deploy all services to the cluster
+    cmds:
+      - helmfile -e ${DEPLOY_ENV:-dev} apply
+
+  sync:
+    desc: Sync all services (force apply without diff)
+    cmds:
+      - helmfile -e ${DEPLOY_ENV:-dev} sync
+
+  destroy:
+    desc: Remove all deployed services from the cluster
+    cmds:
+      - echo "WARNING - This will remove all services from the cluster!"
+      - helmfile -e ${DEPLOY_ENV:-dev} destroy
+
+  status:
+    desc: Show deployed pod and ingress status
+    cmds:
+      - echo "=== Application (${NAMESPACE:-app}) ==="
+      - kubectl get pods -n ${NAMESPACE:-app}
+      - kubectl get ingress -n ${NAMESPACE:-app}
+      - echo ""
+      - echo "=== OpenClaw (${OPENCLAW_NAMESPACE:-openclaw}) ==="
+      - kubectl get pods -n ${OPENCLAW_NAMESPACE:-openclaw}
+      - kubectl get ingress -n ${OPENCLAW_NAMESPACE:-openclaw}
+
+  logs:
+    desc: Show logs for a service (usage - task infra:k8s:logs -- backend)
+    cmds:
+      - kubectl logs -f -l app={{.CLI_ARGS}} --all-namespaces
+
+  openclaw:pair:
+    desc: Approve a pending OpenClaw device pairing request
+    vars:
+      NS: '{{.OPENCLAW_NAMESPACE | default "openclaw"}}'
+      POD_EXEC: kubectl exec -n {{.NS}} deploy/openclaw-gateway --
+      NIX_PREFIX: bash -c "source /etc/nix-env && export PATH=/usr/local/bin:$$NIX_PATHS &&"
+    cmds:
+      - echo ""
+      - echo "=== OpenClaw Device Pairing ==="
+      - echo ""
+      - echo "1. Open https://{{.OPENCLAW_HOST | default "openclaw.mac-mini"}} in your browser"
+      - echo "2. Enter your OPENCLAW_AUTH_TOKEN as the Gateway Token"
+      - echo "3. Click Connect — you'll see 'pairing required'"
+      - echo "4. Come back here and press Enter to approve the pending device"
+      - echo ""
+      - echo "Press Enter when you've clicked Connect in the browser..."
+      - read
+      - |
+        REQUEST_ID=$({{.POD_EXEC}} bash -c "source /etc/nix-env && export PATH=/usr/local/bin:\$NIX_PATHS && openclaw devices list" 2>&1 | grep -i pending -A 10 | grep -oE '[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}' | head -1)
+        if [ -z "$REQUEST_ID" ]; then
+          echo "No pending pairing requests found. Make sure you clicked Connect in the browser first."
+          exit 1
+        fi
+        echo "Approving device: $REQUEST_ID"
+        {{.POD_EXEC}} bash -c "source /etc/nix-env && export PATH=/usr/local/bin:\$NIX_PATHS && openclaw devices approve $REQUEST_ID"
+        echo ""
+        echo "Device approved! Go back to the browser and click Connect again."
+
+  openclaw:logs:
+    desc: Follow OpenClaw gateway logs
+    cmds:
+      - kubectl logs -f -n {{.OPENCLAW_NAMESPACE | default "openclaw"}} deploy/openclaw-gateway
+
+  openclaw:shell:
+    desc: Shell into the OpenClaw gateway pod
+    cmds:
+      - kubectl exec -it -n {{.OPENCLAW_NAMESPACE | default "openclaw"}} deploy/openclaw-gateway -- bash

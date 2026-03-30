@@ -1,0 +1,105 @@
+version: '3'
+
+tasks:
+  # Local Development Tasks
+  local:start:
+    desc: Start Backend Python Service locally via Docker Compose
+    dir: '{{.TASKFILE_DIR}}/../..'
+    cmds:
+      - docker compose -f infrastructure/docker/compose.yml up --build -d backend-python
+      - echo "Backend Python Service started at http://localhost:${BACKEND_PYTHON_PORT:-8090}"
+
+  local:stop:
+    desc: Stop Backend Python Service locally
+    dir: '{{.TASKFILE_DIR}}/../..'
+    cmds:
+      - docker compose -f infrastructure/docker/compose.yml stop backend-python
+
+  local:restart:
+    desc: Restart Backend Python Service locally (rebuild and start)
+    dir: '{{.TASKFILE_DIR}}/../..'
+    cmds:
+      - docker compose -f infrastructure/docker/compose.yml stop backend-python
+      - docker compose -f infrastructure/docker/compose.yml up --build -d backend-python
+      - echo "Backend Python Service restarted at http://localhost:${BACKEND_PYTHON_PORT:-8090}"
+
+  local:logs:
+    desc: Show Backend Python Service logs
+    dir: '{{.TASKFILE_DIR}}/../..'
+    cmds:
+      - docker compose -f infrastructure/docker/compose.yml logs -f backend-python
+
+  local:run:
+    desc: Run Backend Python Service locally with hot reload (outside Docker)
+    dir: '{{.TASKFILE_DIR}}'
+    cmds:
+      - uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8080} --reload
+
+  local:test:
+    desc: Run tests for the Backend Python Service
+    dir: '{{.TASKFILE_DIR}}'
+    cmds:
+      - pytest
+
+  local:test:coverage:
+    desc: Run tests with coverage report
+    dir: '{{.TASKFILE_DIR}}'
+    cmds:
+      - coverage run -m pytest
+      - coverage report -m
+      - coverage html
+
+  local:lint:
+    desc: Lint the Backend Python Service code with ruff
+    dir: '{{.TASKFILE_DIR}}'
+    cmds:
+      - ruff check app
+
+  local:lint:fix:
+    desc: Lint and auto-fix the Backend Python Service code with ruff
+    dir: '{{.TASKFILE_DIR}}'
+    cmds:
+      - ruff check --fix app
+
+  local:type-check:
+    desc: Type-check the Backend Python Service code with mypy
+    dir: '{{.TASKFILE_DIR}}'
+    cmds:
+      - mypy app
+
+  local:health:
+    desc: Test Backend Python Service health endpoint
+    cmds:
+      - curl -f http://localhost:${PORT:-8080}/health || echo "Health check failed"
+
+  # Database Migration Tasks
+  local:migration:generate:
+    desc: Generate a new Alembic migration from model changes
+    dir: '{{.TASKFILE_DIR}}'
+    cmds:
+      - |
+        if [ -z "{{.CLI_ARGS}}" ]; then
+          echo "Error: Migration name required"
+          echo "Usage: task backend-python:local:migration:generate -- MigrationName"
+          exit 1
+        fi
+        alembic revision --autogenerate -m "{{.CLI_ARGS}}"
+
+  local:migration:run:
+    desc: Run pending Alembic migrations
+    dir: '{{.TASKFILE_DIR}}'
+    cmds:
+      - alembic upgrade head
+
+  local:migration:revert:
+    desc: Revert the last Alembic migration
+    dir: '{{.TASKFILE_DIR}}'
+    cmds:
+      - alembic downgrade -1
+
+  local:migration:show:
+    desc: Show Alembic migration status
+    dir: '{{.TASKFILE_DIR}}'
+    cmds:
+      - alembic current
+      - alembic history --verbose

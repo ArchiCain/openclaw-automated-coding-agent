@@ -1,0 +1,28 @@
+<mat-toolbar color="primary">
+  <button mat-icon-button (click)="menuToggled.emit()" aria-label="Toggle navigation menu">
+    <mat-icon>menu</mat-icon>
+  </button>
+
+  <span>OpenClaw</span>
+
+  <span style="flex: 1 1 auto;"></span>
+
+  <app-backend-selector />
+
+  <button mat-icon-button [matMenuTriggerFor]="userMenu" aria-label="User menu - logout">
+    <mat-icon>account_circle</mat-icon>
+  </button>
+
+  <mat-menu #userMenu>
+    @if (authService.currentUser$ | async; as user) {
+      <div style="padding: 8px 16px; font-weight: 500;">{{ user.username }}</div>
+    }
+    <div mat-menu-item style="cursor: default;" disableRipple>
+      <app-theme-toggle />
+    </div>
+    <button mat-menu-item (click)="onLogout()" aria-label="logout">
+      <mat-icon>logout</mat-icon>
+      Logout
+    </button>
+  </mat-menu>
+</mat-toolbar>
