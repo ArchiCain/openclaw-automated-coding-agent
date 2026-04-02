@@ -67,17 +67,20 @@ tasks:
       - |
         COMPOSE_FILE="{{.TASKFILE_DIR}}/../../infrastructure/docker/compose.yml"
         ENV_FILE="{{.TASKFILE_DIR}}/../../.env"
-        REQUEST_ID=$(docker compose --env-file "$ENV_FILE" -f "$COMPOSE_FILE" exec -T openclaw-gateway openclaw devices list 2>&1 | grep -i pending -A 10 | grep -oE '[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}' | head -1)
+        EXEC_PREFIX="source /etc/nix-env && export PATH=/usr/local/bin:\$NIX_PATHS"
+        REQUEST_ID=$(docker compose --env-file "$ENV_FILE" -f "$COMPOSE_FILE" exec -T openclaw-gateway bash -c "$EXEC_PREFIX && openclaw devices list" 2>&1 | grep -i pending -A 10 | grep -oE '[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}' | head -1)
         if [ -z "$REQUEST_ID" ]; then
           echo "No pending pairing requests found. Make sure you clicked Connect in the browser first."
           exit 1
         fi
         echo "Approving device: $REQUEST_ID"
-        docker compose --env-file "$ENV_FILE" -f "$COMPOSE_FILE" exec -T openclaw-gateway openclaw devices approve $REQUEST_ID
+        docker compose --env-file "$ENV_FILE" -f "$COMPOSE_FILE" exec -T openclaw-gateway bash -c "$EXEC_PREFIX && openclaw devices approve $REQUEST_ID"
         echo ""
         echo "Device approved! Go back to the browser and click Connect again."
 
   # Remote Build & Deploy Tasks
+  # The Nix-based Dockerfile cannot be cross-compiled (arm64->amd64) due to QEMU seccomp
+  # limitations. These tasks build directly on the target K8s node via SSH.
   remote:build:
     desc: Build and push image on the remote K8s node
     cmds:
